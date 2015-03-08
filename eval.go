@@ -16,8 +16,6 @@ func Evaluate(parsed *ParsedExpression, scope map[string]interface{}) (float64, 
 		return 0, err
 	}
 
-	fmt.Println("result", result, err)
-
 	return result.(float64), nil
 }
 
@@ -27,16 +25,30 @@ func evaluate(node ast.Node, scope map[string]interface{}) (value interface{}, e
 
 	case *ast.Ident:
 		ident := node.(*ast.Ident)
-		fmt.Println("IDENT: ", node.(*ast.Ident).Name)
 
 		v, found := scope[ident.Name]
-		fmt.Printf("IDENT: %v %v\n", v, found)
 
 		if !found {
 			err = fmt.Errorf("no value for %s", ident.Name)
 			break
 		} else {
-			value = v
+
+			switch v.(type) {
+			case int:
+				value = float64(v.(int))
+			case float32, float64:
+				value = v
+			default:
+				value = v
+
+				t := reflect.TypeOf(v).Kind()
+				if t == reflect.Struct {
+					value = v
+				} else {
+					err = fmt.Errorf("unsupported type %v", t)
+				}
+			}
+			fmt.Println(reflect.TypeOf(v), reflect.TypeOf(value))
 		}
 
 	case *ast.BinaryExpr:
@@ -57,7 +69,6 @@ func evaluate(node ast.Node, scope map[string]interface{}) (value interface{}, e
 		}
 
 		lFloat, ok := lValue.(float64)
-		//fmt.Println(lValue, reflect.TypeOf(lValue), lFloat, ok)
 
 		if !ok {
 			err = fmt.Errorf("could not convert %v (left) to float64", lValue)
@@ -84,7 +95,6 @@ func evaluate(node ast.Node, scope map[string]interface{}) (value interface{}, e
 
 	case *ast.SelectorExpr:
 		sel := node.(*ast.SelectorExpr)
-		fmt.Println("SELECTOR", sel.X, sel.Sel)
 
 		ident, e := evaluate(sel.X, scope)
 
@@ -94,14 +104,11 @@ func evaluate(node ast.Node, scope map[string]interface{}) (value interface{}, e
 		}
 
 		value = ident
-		fmt.Println("SELECTOR: ident %v", ident)
 
 		r := reflect.ValueOf(ident)
 		v := r.FieldByName(sel.Sel.Name)
 		f := v.Float()
-		fmt.Println(sel.Sel.Name, r, v, f)
 
-		//v := reflect.FieldByName(scope[sel.X])
 		value = f
 	case *ast.ParenExpr:
 		value, err = evaluate(node.(*ast.ParenExpr).X, scope)
@@ -115,12 +122,9 @@ func evaluate(node ast.Node, scope map[string]interface{}) (value interface{}, e
 		}
 
 		value = float
-		//value = node.(*ast.BasicLit).Value
 	default:
 		err = fmt.Errorf("unsupported node %+v (%d - %d)", node, node.Pos(), node.End())
 	}
-
-	fmt.Println("evaluated:", value, err)
 
 	return value, err
 }

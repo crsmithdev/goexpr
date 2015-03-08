@@ -1,7 +1,6 @@
 package goexpr
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -18,44 +17,57 @@ type Struct1 struct {
 
 var _ = Describe("Goexpr", func() {
 
-	It("Evaluates a simple expression", func() {
+	It("Evaluates a simple integer expression", func() {
 
-		parsed, err := Parse("a + b")
+		parsed, err := Parse("a")
+		t := GinkgoT()
+
+		assert.Nil(t, err)
+
+		scope := map[string]interface{}{
+			"a": 1,
+		}
+
+		result, err := Evaluate(parsed, scope)
+
+		assert.Nil(t, err)
+		assert.Equal(t, result, 1)
+	})
+
+	It("Evaluates a simple float expression", func() {
+
+		parsed, err := Parse("a")
 		t := GinkgoT()
 
 		assert.Nil(t, err)
 
 		scope := map[string]interface{}{
 			"a": 1.0,
-			"b": 2.0,
 		}
 
 		result, err := Evaluate(parsed, scope)
 
 		assert.Nil(t, err)
-		assert.Equal(t, result, 3)
+		assert.Equal(t, result, 1)
 	})
 
-	It("Evalutes an expression with selection", func() {
+	It("Evaluates a simple selection expression", func() {
 
-		parsed, err := Parse("a.value + c")
+		parsed, err := Parse("a.b")
 		t := GinkgoT()
 
 		assert.Nil(t, err)
 
+		obj := struct {
+			b float64
+		}{1}
 		scope := map[string]interface{}{
-			"a": Struct1{1.0},
-			"c": 2.0,
+			"a": obj,
 		}
-
-		//fmt.Println(parsed)
-		//fmt.Println(scope)
 
 		result, err := Evaluate(parsed, scope)
 
-		fmt.Println(result)
-
-		assert.Equal(t, result, 3)
-
+		assert.Nil(t, err)
+		assert.Equal(t, result, 1)
 	})
 })
