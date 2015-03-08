@@ -17,7 +17,21 @@ type Struct1 struct {
 
 var _ = Describe("Goexpr", func() {
 
-	It("Evaluates a simple integer expression", func() {
+	It("Evaluates a simple integer constant", func() {
+
+		parsed, err := Parse("1")
+		t := GinkgoT()
+
+		assert.Nil(t, err)
+
+		scope := map[string]interface{}{}
+		result, err := Evaluate(parsed, scope)
+
+		assert.Nil(t, err)
+		assert.Equal(t, result, 1)
+	})
+
+	It("Evaluates a simple integer value", func() {
 
 		parsed, err := Parse("a")
 		t := GinkgoT()
@@ -34,7 +48,21 @@ var _ = Describe("Goexpr", func() {
 		assert.Equal(t, result, 1)
 	})
 
-	It("Evaluates a simple float expression", func() {
+	It("Evaluates a simple float constant", func() {
+
+		parsed, err := Parse("1.0")
+		t := GinkgoT()
+
+		assert.Nil(t, err)
+
+		scope := map[string]interface{}{}
+		result, err := Evaluate(parsed, scope)
+
+		assert.Nil(t, err)
+		assert.Equal(t, result, 1.0)
+	})
+
+	It("Evaluates a simple float value", func() {
 
 		parsed, err := Parse("a")
 		t := GinkgoT()
@@ -48,26 +76,7 @@ var _ = Describe("Goexpr", func() {
 		result, err := Evaluate(parsed, scope)
 
 		assert.Nil(t, err)
-		assert.Equal(t, result, 1)
+		assert.Equal(t, result, 1.0)
 	})
 
-	It("Evaluates a simple selection expression", func() {
-
-		parsed, err := Parse("a.b")
-		t := GinkgoT()
-
-		assert.Nil(t, err)
-
-		obj := struct {
-			b float64
-		}{1}
-		scope := map[string]interface{}{
-			"a": obj,
-		}
-
-		result, err := Evaluate(parsed, scope)
-
-		assert.Nil(t, err)
-		assert.Equal(t, result, 1)
-	})
 })

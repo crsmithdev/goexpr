@@ -52,9 +52,6 @@ func parse(node ast.Node) (vars []string, err error) {
 
 		vars = append(lVars, rVars...)
 
-	case *ast.SelectorExpr:
-		vars, err = parse(node.(*ast.SelectorExpr).X)
-
 	case *ast.ParenExpr:
 		vars, err = parse(node.(*ast.ParenExpr).X)
 

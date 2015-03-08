@@ -48,7 +48,6 @@ func evaluate(node ast.Node, scope map[string]interface{}) (value interface{}, e
 					err = fmt.Errorf("unsupported type %v", t)
 				}
 			}
-			fmt.Println(reflect.TypeOf(v), reflect.TypeOf(value))
 		}
 
 	case *ast.BinaryExpr:
@@ -93,25 +92,9 @@ func evaluate(node ast.Node, scope map[string]interface{}) (value interface{}, e
 			value = lFloat / rFloat
 		}
 
-	case *ast.SelectorExpr:
-		sel := node.(*ast.SelectorExpr)
-
-		ident, e := evaluate(sel.X, scope)
-
-		if e != nil {
-			err = e
-			break
-		}
-
-		value = ident
-
-		r := reflect.ValueOf(ident)
-		v := r.FieldByName(sel.Sel.Name)
-		f := v.Float()
-
-		value = f
 	case *ast.ParenExpr:
 		value, err = evaluate(node.(*ast.ParenExpr).X, scope)
+
 	case *ast.BasicLit:
 		lit := node.(*ast.BasicLit)
 		float, e := strconv.ParseFloat(lit.Value, 64)
