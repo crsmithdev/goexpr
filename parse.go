@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/token"
 )
 
 func Parse(expr string) (*ParsedExpression, error) {
@@ -35,22 +36,7 @@ func parse(node ast.Node) (vars []string, err error) {
 		vars = []string{ident.Name}
 
 	case *ast.BinaryExpr:
-		exprNode := node.(*ast.BinaryExpr)
-		lVars, e := parse(exprNode.X)
-
-		if e != nil {
-			err = e
-			break
-		}
-
-		rVars, err := parse(exprNode.Y)
-
-		if err != nil {
-			err = e
-			break
-		}
-
-		vars = append(lVars, rVars...)
+		vars, err = parseBinary(node.(*ast.BinaryExpr))
 
 	case *ast.ParenExpr:
 		vars, err = parse(node.(*ast.ParenExpr).X)
@@ -61,6 +47,34 @@ func parse(node ast.Node) (vars []string, err error) {
 	default:
 		err = fmt.Errorf("unsupported node %+v (%d - %d)", node, node.Pos(), node.End())
 	}
+
+	return vars, err
+}
+
+func parseBinary(node *ast.BinaryExpr) ([]string, error) {
+
+	var vars []string
+
+	switch node.Op {
+	case token.ADD, token.SUB, token.MUL, token.QUO:
+		break
+	default:
+		return vars, fmt.Errorf("unsupported binary operation: %s", node.Op)
+	}
+
+	lVars, err := parse(node.X)
+
+	if err != nil {
+		return vars, err
+	}
+
+	rVars, err := parse(node.Y)
+
+	if err != nil {
+		return vars, err
+	}
+
+	vars = append(lVars, rVars...)
 
 	return vars, err
 }

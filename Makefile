@@ -10,12 +10,14 @@ build:
 	go build .
 
 test:
+	go tool vet -v .
 	ginkgo -r .
 
 test-auto:
 	ginkgo watch -r .
 
 test-cov:
+	go tool vet -v .
 	ginkgo -r -cover .
 	echo "mode: atomic" > coverage.out
 	@for file in $$(find . -name "*.coverprofile" ! -name "coverage.out"); do \
@@ -23,5 +25,5 @@ test-cov:
 		rm $$file ; \
 	done
 
-html-cov:
+html-cov: test-cov
 	go tool cover -html=coverage.out

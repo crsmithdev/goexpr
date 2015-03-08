@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func Evaluate(parsed *ParsedExpression, scope map[string]interface{}) (float64, error) {
+func Evaluate(parsed *ParsedExpression, scope map[string]float64) (float64, error) {
 
 	result, err := evaluate(parsed.Ast, scope)
 
@@ -16,97 +16,70 @@ func Evaluate(parsed *ParsedExpression, scope map[string]interface{}) (float64, 
 		return 0, err
 	}
 
-	return result.(float64), nil
+	return result, nil
 }
 
-func evaluate(node ast.Node, scope map[string]interface{}) (value interface{}, err error) {
+func evaluate(node ast.Node, scope map[string]float64) (value float64, err error) {
 
 	switch node.(type) {
 
 	case *ast.Ident:
-		ident := node.(*ast.Ident)
-
-		v, found := scope[ident.Name]
-
-		if !found {
-			err = fmt.Errorf("no value for %s", ident.Name)
-			break
-		} else {
-
-			switch v.(type) {
-			case int:
-				value = float64(v.(int))
-			case float32, float64:
-				value = v
-			default:
-				value = v
-
-				t := reflect.TypeOf(v).Kind()
-				if t == reflect.Struct {
-					value = v
-				} else {
-					err = fmt.Errorf("unsupported type %v", t)
-				}
-			}
-		}
+		value, err = evaluateIdent(node.(*ast.Ident), scope)
 
 	case *ast.BinaryExpr:
-		exprNode := node.(*ast.BinaryExpr)
-
-		lValue, e := evaluate(exprNode.X, scope)
-
-		if e != nil {
-			err = e
-			break
-		}
-
-		rValue, e := evaluate(exprNode.Y, scope)
-
-		if e != nil {
-			err = e
-			break
-		}
-
-		lFloat, ok := lValue.(float64)
-
-		if !ok {
-			err = fmt.Errorf("could not convert %v (left) to float64", lValue)
-			break
-		}
-
-		rFloat, ok := rValue.(float64)
-
-		if !ok {
-			err = fmt.Errorf("could not convert %v to float64", rValue)
-			break
-		}
-
-		switch exprNode.Op {
-		case token.ADD:
-			value = lFloat + rFloat
-		case token.SUB:
-			value = lFloat - rFloat
-		case token.MUL:
-			value = lFloat * rFloat
-		case token.QUO:
-			value = lFloat / rFloat
-		}
+		value, err = evaluateBinary(node.(*ast.BinaryExpr), scope)
 
 	case *ast.ParenExpr:
 		value, err = evaluate(node.(*ast.ParenExpr).X, scope)
 
 	case *ast.BasicLit:
-		lit := node.(*ast.BasicLit)
-		float, e := strconv.ParseFloat(lit.Value, 64)
+		value, err = strconv.ParseFloat(node.(*ast.BasicLit).Value, 64)
 
-		if e != nil {
-			err = e
-			break
-		}
-
-		value = float
 	default:
-		err = fmt.Errorf("unsupported node %+v (%d - %d)", node, node.Pos(), node.End())
+		err = fmt.Errorf("unsupported node %+v (type %+v)", node, reflect.TypeOf(node))
+	}
+
+	return value, err
+}
+
+func evaluateIdent(node *ast.Ident, scope map[string]float64) (float64, error) {
+
+	value, found := scope[node.Name]
+
+	if !found {
+		return 0, fmt.Errorf("no value for %s in scope %v", node.Name, scope)
+	}
+
+	return value, nil
+}
+
+func evaluateBinary(node *ast.BinaryExpr, scope map[string]float64) (float64, error) {
+
+	lValue, err := evaluate(node.X, scope)
+
+	if err != nil {
+		return 0, err
+	}
+
+	rValue, err := evaluate(node.Y, scope)
+
+	if err != nil {
+		return 0, err
+	}
+
+	var value float64
+
+	switch node.Op {
+	case token.ADD:
+		value = lValue + rValue
+	case token.SUB:
+		value = lValue - rValue
+	case token.MUL:
+		value = lValue * rValue
+	case token.QUO:
+		value = lValue / rValue
+	default:
+		err = fmt.Errorf("unsupported binary operation: %s", node.Op)
 	}
 
 	return value, err

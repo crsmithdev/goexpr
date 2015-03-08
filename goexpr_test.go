@@ -11,72 +11,121 @@ func TestParsing(t *testing.T) {
 	RunSpecs(t, "Goexpr")
 }
 
-type Struct1 struct {
-	value float64
+func testEvaluate(t GinkgoTInterface, expr string, scope map[string]float64, expected float64) {
+
+	parsed, err := Parse(expr)
+
+	assert.Nil(t, err)
+
+	result, err := Evaluate(parsed, scope)
+
+	assert.Nil(t, err)
+	assert.Equal(t, result, expected)
 }
 
-var _ = Describe("Goexpr", func() {
+func testEvaluateError(t GinkgoTInterface, expr string, scope map[string]float64) error {
 
-	It("Evaluates a simple integer constant", func() {
+	parsed, err := Parse(expr)
 
-		parsed, err := Parse("1")
-		t := GinkgoT()
+	assert.Nil(t, err)
 
-		assert.Nil(t, err)
+	_, err = Evaluate(parsed, scope)
 
-		scope := map[string]interface{}{}
-		result, err := Evaluate(parsed, scope)
+	assert.NotNil(t, err)
+	return err
+}
 
-		assert.Nil(t, err)
-		assert.Equal(t, result, 1)
+func testParseError(t GinkgoTInterface, expr string, scope map[string]float64) error {
+
+	_, err := Parse(expr)
+
+	assert.NotNil(t, err)
+	return err
+}
+
+var _ = Describe("Sanity", func() {
+
+	It("Evaluates a constant", func() {
+
+		testEvaluate(GinkgoT(), "1", map[string]float64{}, 1)
 	})
 
-	It("Evaluates a simple integer value", func() {
+	It("Evaluates a value", func() {
 
-		parsed, err := Parse("a")
-		t := GinkgoT()
-
-		assert.Nil(t, err)
-
-		scope := map[string]interface{}{
+		scope := map[string]float64{
 			"a": 1,
 		}
 
-		result, err := Evaluate(parsed, scope)
-
-		assert.Nil(t, err)
-		assert.Equal(t, result, 1)
+		testEvaluate(GinkgoT(), "1", scope, 1)
 	})
+})
 
-	It("Evaluates a simple float constant", func() {
+var _ = Describe("Operations", func() {
 
-		parsed, err := Parse("1.0")
-		t := GinkgoT()
+	It("Adds values and constants", func() {
 
-		assert.Nil(t, err)
-
-		scope := map[string]interface{}{}
-		result, err := Evaluate(parsed, scope)
-
-		assert.Nil(t, err)
-		assert.Equal(t, result, 1.0)
-	})
-
-	It("Evaluates a simple float value", func() {
-
-		parsed, err := Parse("a")
-		t := GinkgoT()
-
-		assert.Nil(t, err)
-
-		scope := map[string]interface{}{
-			"a": 1.0,
+		scope := map[string]float64{
+			"a": 1,
+			"b": 2,
 		}
 
-		result, err := Evaluate(parsed, scope)
+		testEvaluate(GinkgoT(), "a + b + 1", scope, 4)
+	})
 
-		assert.Nil(t, err)
-		assert.Equal(t, result, 1.0)
+	It("Subtracts values and constants", func() {
+
+		scope := map[string]float64{
+			"a": 3,
+			"b": 2,
+		}
+
+		testEvaluate(GinkgoT(), "a - b - 1", scope, 0)
+	})
+
+	It("Multiplies values and constants", func() {
+
+		scope := map[string]float64{
+			"a": 1,
+			"b": 2,
+		}
+
+		testEvaluate(GinkgoT(), "a * b * 3", scope, 6)
+	})
+
+	It("Divides values and constants", func() {
+
+		scope := map[string]float64{
+			"a": 12,
+			"b": 6,
+		}
+
+		testEvaluate(GinkgoT(), "a / b / 2", scope, 1)
+	})
+})
+
+var _ = Describe("Error conditions", func() {
+
+	It("Errors on evaluating with a missing scope value", func() {
+
+		t := GinkgoT()
+		scope := map[string]float64{
+			"a": 1,
+		}
+
+		err := testEvaluateError(t, "a + b", scope)
+		assert.Regexp(t, "scope", err.Error())
+	})
+
+	It("Errors on unsupported binary operation", func() {
+
+		t := GinkgoT()
+		scope := map[string]float64{
+			"a": 1,
+			"b": 2,
+		}
+
+		err := testParseError(t, "a & b", scope)
+		assert.Regexp(t, "operation", err.Error())
 	})
 
 })
