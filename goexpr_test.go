@@ -25,9 +25,9 @@ var _ = Describe("Goexpr", func() {
 
 		assert.Nil(t, err)
 
-		scope := map[string]float64{
-			"a": 1,
-			"b": 2,
+		scope := map[string]interface{}{
+			"a": 1.0,
+			"b": 2.0,
 		}
 
 		result, err := Evaluate(parsed, scope)
@@ -38,20 +38,24 @@ var _ = Describe("Goexpr", func() {
 
 	It("Evalutes an expression with selection", func() {
 
-		parsed, err := Parse("a.b + c")
+		parsed, err := Parse("a.value + c")
 		t := GinkgoT()
 
 		assert.Nil(t, err)
 
 		scope := map[string]interface{}{
-			"a": Struct1{1},
-			"c": 2,
+			"a": Struct1{1.0},
+			"c": 2.0,
 		}
 
-		fmt.Println(parsed)
-		fmt.Println(scope)
+		//fmt.Println(parsed)
+		//fmt.Println(scope)
 
-		//result, err := Evaluate(parsed, scope)
+		result, err := Evaluate(parsed, scope)
+
+		fmt.Println(result)
+
+		assert.Equal(t, result, 3)
 
 	})
 })
