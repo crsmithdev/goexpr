@@ -5,53 +5,55 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"reflect"
 )
 
-func Parse(expr string) (*ParsedExpression, error) {
+// Parse parses a string into an Expression.
+func Parse(str string) (*Expression, error) {
 
-	tree, err := parser.ParseExpr(expr)
-
-	if err != nil {
-		return nil, err
-	}
-
-	vars, err := parse(tree)
+	tree, err := parser.ParseExpr(str)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &ParsedExpression{
-		Vars: vars,
-		Ast:  tree,
+	vars, err := extract(tree)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &Expression{
+		String: str,
+		Vars:   vars,
+		Ast:    tree,
 	}, nil
 }
 
-func parse(node ast.Node) (vars []string, err error) {
+func extract(node ast.Node) (vars []string, err error) {
 
 	switch node.(type) {
 
 	case *ast.Ident:
-		ident := node.(*ast.Ident)
-		vars = []string{ident.Name}
+		vars = []string{node.(*ast.Ident).Name}
 
 	case *ast.BinaryExpr:
-		vars, err = parseBinary(node.(*ast.BinaryExpr))
+		vars, err = extractBinary(node.(*ast.BinaryExpr))
 
 	case *ast.ParenExpr:
-		vars, err = parse(node.(*ast.ParenExpr).X)
+		vars, err = extract(node.(*ast.ParenExpr).X)
 
 	case *ast.BasicLit:
 		break
 
 	default:
-		err = fmt.Errorf("unsupported node %+v (%d - %d)", node, node.Pos(), node.End())
+		err = fmt.Errorf("unsupported node %+v (type %+v)", node, reflect.TypeOf(node))
 	}
 
 	return vars, err
 }
 
-func parseBinary(node *ast.BinaryExpr) ([]string, error) {
+func extractBinary(node *ast.BinaryExpr) ([]string, error) {
 
 	var vars []string
 
@@ -62,13 +64,13 @@ func parseBinary(node *ast.BinaryExpr) ([]string, error) {
 		return vars, fmt.Errorf("unsupported binary operation: %s", node.Op)
 	}
 
-	lVars, err := parse(node.X)
+	lVars, err := extract(node.X)
 
 	if err != nil {
 		return vars, err
 	}
 
-	rVars, err := parse(node.Y)
+	rVars, err := extract(node.Y)
 
 	if err != nil {
 		return vars, err

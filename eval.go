@@ -8,7 +8,8 @@ import (
 	"strconv"
 )
 
-func Evaluate(parsed *ParsedExpression, scope map[string]float64) (float64, error) {
+// Evaluate evalues an expression, given a scope.
+func Evaluate(parsed *Expression, scope map[string]float64) (float64, error) {
 
 	result, err := evaluate(parsed.Ast, scope)
 
