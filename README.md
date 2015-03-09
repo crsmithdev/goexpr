@@ -9,7 +9,7 @@ Goexpr is a Go package that evaluates mathematical expressions.  Values can be c
 
 ## Why?
 
-Being able to evaluate basic mathematical expressions is useful in analytics, but Go is not a scripting language with `eval`.  A simple, pluggable math library abstracts out the mechanics of evaluation from the input data.
+Being able to evaluate basic mathematical expressions is useful in analytics, but Go is not a scripting language with `eval`.  A simple, pluggable math library abstracts out the mechanics of evaluation from the application requiring it.
 
 ## Features
 
