@@ -10,7 +10,6 @@ build:
 	go build .
 
 test:
-	go tool vet -v .
 	ginkgo -r .
 
 test-auto:
