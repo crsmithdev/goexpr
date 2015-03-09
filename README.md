@@ -22,7 +22,6 @@ Being able to evaluate basic mathematical expressions is useful in analytics, bu
 
 Install:
 
-
 ```
 go get github.com/crsmithdev/goxpr
 ```
@@ -46,7 +45,7 @@ result: 2
 
 ## Documentation
 
-API documentation on [Godoc](https://godoc.org/github.com/crsmithdev/goexpr)
+API documentation is on [Godoc](https://godoc.org/github.com/crsmithdev/goexpr).
 
 ## Recommended tools
 
