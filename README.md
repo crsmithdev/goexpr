@@ -5,101 +5,82 @@
 
 ## What?
 
-Goenv is a Go package that provides virtualenv-like functionality for Go projects, isolating dependencies into workspaces for safer and simpler management.
+Goexpr is a Go package that evaluates mathematical expressions.  Values can be constants, or variables whose values are provided at evaluation time.  Goexpr is inspired by [MathJS](http://mathjs.org/).
 
 ## Why?
 
-Go's package management expects that all go source files and packages will exist under a single system directory, GOPATH.  This makes it easy to install and find packages, but means that any  projects being worked on will share the same GOPATH, which can cause issues if different versions of packages are required and make it difficult to create isolated, reproducible builds.
+Being able to evaluate basic mathematical expressions is useful in analytics, but Go is not a scripting language with `eval`.  A simple, pluggable math library abstracts out the mechanics of evaluation from the input data.
 
 ## Features
 
-- Similar functionality to Python's virtualenv and virtualenvwrapper.
-- Separates development directory from import path - e.g., develop in `~/myproject`, but import from `github.com/me/myproject`
-- Isolates dependencies from other projects.
-- Does not interfere with any `go` command functionality.
-- Written in Go, installable with `go get`.
+- Supports basic algebraic operations.
+- Not regex-based, parses with Go's `ast`.
+- Safe, restricted to a subset of language-defined syntax.
+- No external dependencies.
 
 ## Quick start
 
-First, ensure your `PATH` includes the /bin directory in your global `GOPATH`, with something like:
+Install:
+
 
 ```
-PATH=PATH:$GOPATH/bin
+go get github.com/crsmithdev/goxpr
 ```
 
-Install this package:
+Evaluate `(a + b) / 2`, where `a=3` and `b=1`:
 
 ```
-go get github.com/crsmithdev/goenv
+import "github.com/crsmithdev/goexpr"
+
+parsed, _ := goexpr.Parse("(a + b) / 2")
+result, _ := goexpr.Evaluate(parsed, map[string]float64{
+    "a": 3,
+    "b": 1,
+})
+
+fmt.Println("result: %d", result)
+```
+```
+result: 2
 ```
 
-Within your project directory, reate a goenv:
+## Documentation
 
-```
-goenv github.com/me/myproject
-```
+API documentation on [Godoc](https://godoc.org/github.com/crsmithdev/goexpr)
 
-Activate the goenv:
+## Recommended tools
 
-```
-. goenv/activate
-```
+- [godep](https://github.com/tools/godep) to lock to a specific commit or tag
+- [goenv](https://github.com/crsmithdev/goenv)  to isolate dependencies between projects
 
-Install packages with `go get` or other dependency managment tools.
+## Development
 
+After cloning, build:
 ```
-go get github.com/hoisie/redis
+make
 ```
 
-When finished, deactivate the goenv:
-
+Run tests:
 ```
-deactivate
-```
-
-## Commands
-
-### Init
-
-```
-Usage: goenv init [-g][-s][-p][-n] [import path]
-
-Init initializes a goenv and creates an initialization script that
-activates it.  This script creates, if needed, a GOPATH directory
-structure, symlinks the project into that structure at the specified
-input path, and then alters the current session's GOPATH environment
-variable to point to it.
-
-The goenv can be deactivated with 'deactivate'.
-
-Init supports the following options:
-
-    -n
-        the name of the environment, defaulting to the name
-        of the current working directory.
-
-    -g
-        the GOPATH to create, defaulting to ~/.goenv/<name>
-
-    -p
-        the project path, defaulting to the current working
-        directory.
-
-    -s
-        the full path to the initialization script, defaulting
-        to ./goenv/activate.
+make test
 ```
 
-### Help
-
+Run tests automatically on write:
 ```
-Usage: goenv help [command]
-
-Help gets detailed usage information for a command.
+make test-auto
 ```
 
+Run tests with coverage:
+```
+make test-cov
+```
 
-## Todo
+View HTML coverage report:
+```
+make html-cov
+```
 
-- `destroy` command
-- ???
+## Next
+
+- Additional operators and functions
+- Additional examples
